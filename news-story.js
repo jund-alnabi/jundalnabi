@@ -1,10 +1,8 @@
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { get, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
-import { auth, database } from './firebase-client.js';
+import { firebaseConfig } from './firebase-config.js';
 import { isPubliclySafePost } from './news-content.js?v=20261011-admin-approve3';
 import { recordStoryRead } from './news-recommendations.js?v=20261012-recommendations1';
 
-const siteUrl = 'http://jundalnabi.duckdns.org/';
+const siteUrl = 'https://jundalnabi.duckdns.org/';
 const content = document.getElementById('publishedStory');
 const status = document.getElementById('storyStatus');
 const image = document.getElementById('storyImage');
@@ -12,13 +10,70 @@ const source = document.getElementById('storySource');
 const publisherId = `${siteUrl}#organization`;
 const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
-const getCurrentUser = () => new Promise((resolve, reject) => {
-  let unsubscribe = () => {};
-  unsubscribe = onAuthStateChanged(auth, (user) => {
-    unsubscribe();
-    resolve(user);
-  }, reject);
-});
+const loadStory = async (id) => {
+  try {
+    const databaseUrl = new URL(
+      `newsPosts/${encodeURIComponent(id)}.json`,
+      `${firebaseConfig.databaseURL.replace(/\/+$/, '')}/`,
+    );
+    const controller = new AbortController();
+    const restTimeoutId = window.setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch(databaseUrl, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`Firebase REST endpoint returned HTTP ${response.status}.`);
+      }
+      const post = await response.json();
+      if (post && typeof post === 'object' && typeof post.error === 'string') {
+        throw new Error(`Firebase REST endpoint returned an error: ${post.error}`);
+      }
+      return post;
+    } finally {
+      window.clearTimeout(restTimeoutId);
+    }
+  } catch (restError) {
+    console.error('Firebase REST story read failed; trying the Firebase SDK.', restError);
+    let sdkTimeoutId;
+    try {
+      const [{ database }, { get, ref }] = await Promise.all([
+        import('./firebase-client.js'),
+        import('https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js'),
+      ]);
+      const timeout = new Promise((resolve, reject) => {
+        sdkTimeoutId = window.setTimeout(
+          () => reject(new Error('Firebase SDK read timed out.')),
+          10000,
+        );
+      });
+      const snapshot = await Promise.race([
+        get(ref(database, `newsPosts/${id}`)),
+        timeout,
+      ]);
+      return snapshot.val();
+    } catch (sdkError) {
+      console.error('Firebase SDK story fallback failed.', sdkError);
+      throw new Error('The story could not be retrieved from Firebase by either client.');
+    } finally {
+      window.clearTimeout(sdkTimeoutId);
+    }
+  }
+};
+
+const getCurrentUser = async () => {
+  const [{ auth }, { onAuthStateChanged }] = await Promise.all([
+    import('./firebase-client.js'),
+    import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js'),
+  ]);
+
+  return new Promise((resolve, reject) => {
+    let unsubscribe = () => {};
+    unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    }, reject);
+  });
+};
 
 const setMetaContent = (selector, contentValue) => {
   const meta = document.querySelector(selector);
@@ -91,10 +146,19 @@ const safeImageUrl = (value) => {
   }
 };
 
-const showUnavailable = (message) => {
+const showUnavailable = (message, canRetry = false) => {
   status.textContent = message;
   status.classList.add('is-error');
   content.hidden = true;
+  document.documentElement.dataset.storyResolved = 'true';
+  if (canRetry) {
+    const retryButton = document.createElement('button');
+    retryButton.className = 'btn btn-secondary';
+    retryButton.type = 'button';
+    retryButton.textContent = 'Retry';
+    retryButton.addEventListener('click', () => window.location.reload());
+    status.append(' ', retryButton);
+  }
 };
 
 const queryPostId = new URLSearchParams(window.location.search).get('id');
@@ -119,13 +183,17 @@ if (!postId) {
     if (isPreview && !user) {
       showUnavailable('Sign in to the admin account that published this story to preview it.');
     } else {
-      const snapshot = await get(ref(database, `newsPosts/${postId}`));
-      const storedPost = snapshot.val();
+      const storedPost = await loadStory(postId);
 
       if (
         !storedPost ||
         storedPost.published !== true ||
         !Number.isFinite(storedPost.createdAt) ||
+        storedPost.createdAt <= 0 ||
+        typeof storedPost.title !== 'string' ||
+        typeof storedPost.category !== 'string' ||
+        typeof storedPost.summary !== 'string' ||
+        typeof storedPost.content !== 'string' ||
         (!isPubliclySafePost(storedPost) && (!isPreview || storedPost.authorUid !== user.uid))
       ) {
         showUnavailable('This story was not found or is no longer available.');
@@ -165,6 +233,7 @@ if (!postId) {
         }
 
         content.hidden = false;
+        document.documentElement.dataset.storyResolved = 'true';
         status.textContent = isPreview && !isPublic
           ? 'Admin preview only — this story is hidden from public news pages pending safety review.'
           : '';
@@ -172,6 +241,6 @@ if (!postId) {
     }
   } catch (error) {
     console.error('News story could not be loaded.', error);
-    showUnavailable('This story could not be loaded. Please try again later.');
+    showUnavailable('This story could not be loaded. Check your connection and try again.', true);
   }
 }
