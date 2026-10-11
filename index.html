@@ -51,7 +51,7 @@
             "@id": "http://jundalnabi.duckdns.org/#organization",
             "name": "Jundal Nabi",
             "url": "http://jundalnabi.duckdns.org/",
-            "description": "A modern, search-friendly static website for Jundal Nabi.",
+            "description": "A database-backed news and information website for Jundal Nabi.",
             "logo": {
               "@type": "ImageObject",
               "url": "http://jundalnabi.duckdns.org/assets/favicon.svg"
@@ -63,7 +63,7 @@
   </head>
 
   <body>
-    <header class="site-header">
+    <header class="site-header" id="top">
       <nav class="container nav" aria-label="Main navigation">
         <div class="brand">Jundal Nabi</div>
         <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="siteNavLinks">
@@ -95,15 +95,15 @@
 
             <div class="stats" aria-label="Key statistics">
               <a href="news.html#liveNewsList" aria-label="View all published news stories">
-                <strong id="publishedStoryCount"><!-- GENERATED_PUBLISHED_COUNT_START -->4<!-- GENERATED_PUBLISHED_COUNT_END --></strong>
+                <strong id="publishedStoryCount">0</strong>
                 <span>Published stories</span>
               </a>
               <a href="news.html#liveNewsList" aria-label="View news topics">
-                <strong id="newsTopicCount"><!-- GENERATED_TOPIC_COUNT_START -->3<!-- GENERATED_TOPIC_COUNT_END --></strong>
+                <strong id="newsTopicCount">0</strong>
                 <span>Topics tracked</span>
               </a>
               <a href="news.html#liveNewsList" aria-label="View the latest news update">
-                <strong id="latestNewsDate"><!-- GENERATED_LATEST_DATE_START -->Oct 11, 2026<!-- GENERATED_LATEST_DATE_END --></strong>
+                <strong id="latestNewsDate">None yet</strong>
                 <span>Latest update</span>
               </a>
             </div>
@@ -189,49 +189,13 @@
             </div>
           </div>
 
-          <p class="live-news-heading" id="liveNewsStatus" role="status" aria-live="polite"><!-- GENERATED_HOME_STATUS_START -->Showing the 3 latest stories<!-- GENERATED_HOME_STATUS_END --></p>
+          <div class="news-feed-controls">
+            <p>Recommendations use only story topics and opens saved on this device—not location, device attributes, or other readers’ data.</p>
+            <button class="btn btn-secondary" id="recommendationToggle" type="button" aria-pressed="false">Get recommendations</button>
+            <button class="btn btn-secondary" id="recommendationReset" type="button">Clear local history</button>
+          </div>
+          <p class="live-news-heading" id="liveNewsStatus" role="status" aria-live="polite">Loading published news...</p>
           <div class="news-list home-news-grid" id="liveNewsList" data-limit="3">
-            <!-- GENERATED_HOME_CARDS_START -->            <article class="news-summary-card">
-              <img src="https://i.ibb.co/9H6pcdMJ/Gemini-Generated-Image-t9cvb0t9cvb0t9cv.jpg" alt="Data Breach Alert: Threat Actor &quot;JundAlNabi&quot; Claims Leak of 22.5k E-Commerce Order Records" loading="lazy" />
-              <div class="news-summary-body">
-                <span class="tag">Data Breach</span>
-                <h2>Data Breach Alert: Threat Actor &quot;JundAlNabi&quot; Claims Leak of 22.5k E-Commerce Order Records</h2>
-                <p>Threat actor JundAlNabi has posted claims regarding a data breach involving roughly 22.5k e-commerce customer order records. The alleged leak includes order tracking statuses, customer contact and shipping details, transaction identifiers, and marketing attribution data.</p>
-                <div class="meta-row">
-                  <span class="author">By Admin</span>
-                  <time datetime="2026-10-11T16:55:25.836Z">10/11/2026</time>
-                  <a href="http://jundalnabi.duckdns.org/generated-news/-P3ft-8qgyGaeh_EB9gq.html">Read story</a>
-                </div>
-              </div>
-            </article>
-            <article class="news-summary-card">
-              <img src="https://pbs.twimg.com/media/HTz90iJbUAA_l6v?format=jpg&amp;name=large" alt="Ethnic Food Products Archive Exposure" loading="lazy" />
-              <div class="news-summary-body">
-                <span class="tag">Data Leak</span>
-                <h2>Ethnic Food Products Archive Exposure</h2>
-                <p>A large archive of operational and financial documents surfaced publicly, highlighting
-the wider need for stronger digital accountability and hygiene.</p>
-                <div class="meta-row">
-                  <span class="author">By Admin</span>
-                  <time datetime="2026-10-10T11:21:29.158Z">10/10/2026</time>
-                  <a href="http://jundalnabi.duckdns.org/generated-news/-P3_Xycsx54cY7jfojQz.html">Read story</a>
-                </div>
-              </div>
-            </article>
-            <article class="news-summary-card">
-              <img src="https://pbs.twimg.com/media/HT9x0SZbIAARxaL?format=jpg&amp;name=large" alt="Teleforce Cloud Telephony Exposure" loading="lazy" />
-              <div class="news-summary-body">
-                <span class="tag">Data Leak</span>
-                <h2>Teleforce Cloud Telephony Exposure</h2>
-                <p>A growing public security discussion centered around the exposure of operations linked to
-Garuda Advertising Pvt. Ltd. and the Teleforce cloud telephony platform.</p>
-                <div class="meta-row">
-                  <span class="author">By Admin</span>
-                  <time datetime="2026-10-10T11:17:17.643Z">10/10/2026</time>
-                  <a href="http://jundalnabi.duckdns.org/generated-news/-P3_X0Dls8-dL9igj6wM.html">Read story</a>
-                </div>
-              </div>
-            </article><!-- GENERATED_HOME_CARDS_END -->
           </div>
 
           <div class="news-archive-link">
@@ -270,8 +234,8 @@ Garuda Advertising Pvt. Ltd. and the Teleforce cloud telephony platform.</p>
       </div>
     </div>
 
-    <script src="script.js?v=20261011-static-news1"></script>
+    <script src="script.js?v=20261012-live-news1"></script>
     <script type="module" src="firebase.js"></script>
-    <script type="module" src="news-feed.js?v=20261011-admin-approve3"></script>
+    <script type="module" src="news-feed.js?v=20261012-live-news1"></script>
   </body>
 </html>

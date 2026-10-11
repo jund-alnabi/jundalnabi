@@ -2,6 +2,7 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.10.0/f
 import { get, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { auth, database } from './firebase-client.js';
 import { isPubliclySafePost } from './news-content.js?v=20261011-admin-approve3';
+import { recordStoryRead } from './news-recommendations.js?v=20261012-recommendations1';
 
 const siteUrl = 'http://jundalnabi.duckdns.org/';
 const content = document.getElementById('publishedStory');
@@ -131,6 +132,13 @@ if (!postId) {
       } else {
         const post = storedPost;
         const isPublic = isPubliclySafePost(post);
+        if (isPublic) {
+          try {
+            recordStoryRead(post.category, postId);
+          } catch (error) {
+            console.error('Local news reading history could not be saved.', error);
+          }
+        }
         document.getElementById('storyCategory').textContent = post.category;
         document.getElementById('storyTitle').textContent = post.title;
         document.getElementById('storyDate').dateTime = new Date(post.createdAt).toISOString();

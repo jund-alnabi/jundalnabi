@@ -21,6 +21,18 @@
         "imageUrl": {
           ".validate": "newData.isString()"
         },
+        "sourceUrl": {
+          ".validate": "newData.isString() && newData.val().length <= 2048"
+        },
+        "authorName": {
+          ".validate": "newData.isString() && newData.val() === 'Admin'"
+        },
+        "authorType": {
+          ".validate": "newData.isString() && newData.val() === 'Person'"
+        },
+        "sourceAuthority": {
+          ".validate": "newData.isNumber() && newData.val() >= 0.5 && newData.val() <= 2"
+        },
         "createdAt": {
           ".validate": "newData.isNumber()"
         },

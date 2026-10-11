@@ -699,6 +699,25 @@ h1 {
   font-size: 1rem;
 }
 
+.news-feed-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  color: var(--muted);
+}
+
+.news-feed-controls p {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+.news-feed-controls button {
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
 .home-news-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
@@ -1159,6 +1178,11 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  .news-feed-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .nav {
     min-height: 68px;
     flex-direction: row;

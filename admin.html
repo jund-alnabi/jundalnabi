@@ -34,6 +34,7 @@
             This site uses the jundalnabi-9b088 Firebase project. Sign in with its authorized account
             to publish and manage stories. If Firebase denies access, verify the account UID and that
             <code>database.rules.json</code> matches the rules currently published under Realtime Database → Rules.
+            Publish the updated rules there to enable post approvals.
           </p>
         </header>
 
@@ -101,6 +102,7 @@
               <textarea id="newsContent" name="content" rows="10" maxlength="20000" required></textarea>
               <small class="admin-field-help">
                 Identify the source and link to it where available. State what is known, what is alleged, and what remains unverified. Correct errors promptly.
+                Describe exposed data types generally; do not include real personal details or links to leaked files.
                 <a href="editorial-standards.html">Read the editorial standards.</a>
               </small>
 
@@ -109,6 +111,10 @@
 
               <label for="newsSourceUrl">Original source URL <span>(optional, HTTPS)</span></label>
               <input id="newsSourceUrl" name="sourceUrl" type="url" inputmode="url" />
+
+              <label for="newsSourceAuthority">Source authority score <span>(0.5–2.0, default 1.0)</span></label>
+              <input id="newsSourceAuthority" name="sourceAuthority" type="number" min="0.5" max="2" step="0.1" value="1" required />
+              <small class="admin-field-help">Editorial estimate used only to rank recommendations. This is not independent verification of a source.</small>
 
               <button class="btn btn-primary" type="submit">Publish story</button>
             </form>
@@ -139,6 +145,6 @@
 
     <script src="script.js"></script>
     <script type="module" src="firebase.js"></script>
-    <script type="module" src="admin.js?v=20261011-static-news1"></script>
+    <script type="module" src="admin.js?v=20261011-admin-approve3"></script>
   </body>
 </html>

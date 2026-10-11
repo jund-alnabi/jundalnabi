@@ -1,6 +1,7 @@
 import { onValue, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { database } from './firebase-client.js';
 import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-admin-approve3';
+import { clearStoryReads, rankStories } from './news-recommendations.js?v=20261012-recommendations1';
 
 const feed = document.getElementById('liveNewsList');
 const status = document.getElementById('liveNewsStatus');
@@ -9,6 +10,10 @@ const postLimit = Number.parseInt(feed.dataset.limit, 10);
 const publishedStoryCount = document.getElementById('publishedStoryCount');
 const newsTopicCount = document.getElementById('newsTopicCount');
 const latestNewsDate = document.getElementById('latestNewsDate');
+const recommendationToggle = document.getElementById('recommendationToggle');
+const recommendationReset = document.getElementById('recommendationReset');
+let latestSnapshot;
+let recommendationsEnabled = false;
 const updateNewsStats = (posts) => {
   if (!publishedStoryCount || !newsTopicCount || !latestNewsDate) return;
 
@@ -127,6 +132,7 @@ const buildReviewNotice = (post) => {
 };
 
 const updateNewsFeed = (snapshot) => {
+  latestSnapshot = snapshot;
   const publishedPosts = [];
   const posts = [];
   let withheldPosts = 0;
@@ -167,9 +173,19 @@ const updateNewsFeed = (snapshot) => {
     newsListSchema.textContent = JSON.stringify(schema).replace(/</g, '\\u003c');
   }
 
+  let orderedPosts = posts;
+  let recommendationError = false;
+  if (recommendationsEnabled) {
+    try {
+      orderedPosts = rankStories(posts);
+    } catch (error) {
+      console.error('Local news recommendations could not be calculated.', error);
+      recommendationError = true;
+    }
+  }
   const visiblePosts = Number.isInteger(postLimit) && postLimit > 0
-    ? posts.slice(0, Math.max(0, postLimit - Number(latestPostIsWithheld)))
-    : posts;
+    ? orderedPosts.slice(0, Math.max(0, postLimit - Number(latestPostIsWithheld)))
+    : orderedPosts;
 
   const cards = visiblePosts.map(([id, post]) => buildPostCard([id, post]));
   if (latestPostIsWithheld) cards.unshift(buildReviewNotice(publishedPosts[0][1]));
@@ -202,7 +218,9 @@ const updateNewsFeed = (snapshot) => {
     ticker.classList.toggle('has-headlines', group.childElementCount > 0);
   }
   const visibleStatus = visiblePosts.length
-    ? `Showing the ${visiblePosts.length} latest ${visiblePosts.length === 1 ? 'story' : 'stories'}`
+    ? recommendationsEnabled && !recommendationError
+      ? `Showing ${visiblePosts.length} recommended ${visiblePosts.length === 1 ? 'story' : 'stories'}`
+      : `Showing the ${visiblePosts.length} latest ${visiblePosts.length === 1 ? 'story' : 'stories'}`
     : 'No published stories are available.';
   const withheldStatus = latestPostIsWithheld
     ? 'The latest submission is pending Admin safety review.'
@@ -211,9 +229,15 @@ const updateNewsFeed = (snapshot) => {
   const olderWithheldStatus = olderWithheldCount > 0
     ? `${olderWithheldCount} older ${olderWithheldCount === 1 ? 'post is' : 'posts are'} also hidden pending review.`
     : '';
-  status.textContent = [visibleStatus, withheldStatus, olderWithheldStatus]
+  const recommendationStatus = recommendationsEnabled
+    ? recommendationError
+      ? 'Local recommendations are unavailable; showing the latest stories instead.'
+      : 'Ranked using this browser’s topic reading history. Reading history stays on this device.'
+    : '';
+  status.textContent = [visibleStatus, withheldStatus, olderWithheldStatus, recommendationStatus]
     .filter(Boolean)
     .join(' ');
+  status.classList.toggle('is-error', recommendationError);
 };
 
 const showNewsFeedError = (error) => {
@@ -223,6 +247,25 @@ const showNewsFeedError = (error) => {
 };
 
 try {
+  recommendationToggle?.addEventListener('click', () => {
+    recommendationsEnabled = !recommendationsEnabled;
+    recommendationToggle.textContent = recommendationsEnabled
+      ? 'Show latest first'
+      : 'Get recommendations';
+    recommendationToggle.setAttribute('aria-pressed', String(recommendationsEnabled));
+    if (latestSnapshot) updateNewsFeed(latestSnapshot);
+  });
+  recommendationReset?.addEventListener('click', () => {
+    try {
+      clearStoryReads();
+      if (latestSnapshot) updateNewsFeed(latestSnapshot);
+      status.textContent = 'Local recommendation history cleared.';
+    } catch (error) {
+      console.error('Local news reading history could not be cleared.', error);
+      status.textContent = 'Local recommendation history could not be cleared.';
+      status.classList.add('is-error');
+    }
+  });
   onValue(ref(database, 'newsPosts'), updateNewsFeed, showNewsFeedError, { onlyOnce: false });
 } catch (error) {
   showNewsFeedError(error);

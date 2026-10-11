@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { get, push, ref, remove, serverTimestamp, set } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
+import { get, push, ref, remove, serverTimestamp, set, update } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { auth, database } from './firebase-client.js';
-import { storyUrl } from './news-content.js?v=20261011-static-news1';
+import { canAdminApprovePost, isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-admin-approve3';
 
 const loginForm = document.getElementById('loginForm');
 const newsForm = document.getElementById('newsForm');
@@ -13,6 +13,7 @@ const categoryOptions = document.getElementById('categoryOptions');
 const postsList = document.getElementById('adminPostsList');
 const postsStatus = document.getElementById('postsStatus');
 const refreshPostsButton = document.getElementById('refreshPostsButton');
+const authorizedAdminUid = 'JkKsS2tV4cgAkn9VencX2n59zfb2';
 
 const showStatus = (message, isError = false) => {
   status.textContent = message;
@@ -78,12 +79,36 @@ const loadPostedStories = async () => {
       preview.className = 'admin-post-preview';
       preview.textContent = typeof post.summary === 'string' ? post.summary : '';
 
+      const visibility = document.createElement('p');
+      visibility.className = 'admin-post-meta';
+      const isPublic = isPubliclySafePost(post);
+      visibility.textContent = isPublic
+        ? post.reviewedBy
+          ? 'Approved by Admin and visible on public news pages'
+          : 'Visible on public news pages'
+        : 'Hidden from public news pages pending safety review';
+
       const actions = document.createElement('div');
       actions.className = 'admin-post-actions';
       const viewLink = document.createElement('a');
       viewLink.className = 'btn btn-secondary';
-      viewLink.href = storyUrl(id);
-      viewLink.textContent = 'View';
+      viewLink.href = storyUrl(id, true);
+      viewLink.textContent = 'Preview';
+
+      if (!isPublic && canAdminApprovePost(post)) {
+        const approveButton = document.createElement('button');
+        approveButton.className = 'btn btn-primary';
+        approveButton.type = 'button';
+        approveButton.dataset.approvePostId = id;
+        approveButton.dataset.postTitle = title.textContent;
+        approveButton.textContent = 'Approve';
+        actions.append(approveButton);
+      } else if (!isPublic) {
+        const reviewNote = document.createElement('span');
+        reviewNote.className = 'admin-post-meta';
+        reviewNote.textContent = 'Remove actual private data or replace the blocked image before publishing.';
+        actions.append(reviewNote);
+      }
 
       const deleteButton = document.createElement('button');
       deleteButton.className = 'btn btn-danger';
@@ -92,14 +117,15 @@ const loadPostedStories = async () => {
       deleteButton.textContent = 'Delete';
       deleteButton.setAttribute('aria-label', `Delete ${title.textContent}`);
 
-      details.append(title, meta, preview);
+      details.append(title, meta, visibility, preview);
       actions.append(viewLink, deleteButton);
       item.append(details, actions);
       postsList.append(item);
     });
 
+    const withheldCount = posts.filter(({ post }) => !isPubliclySafePost(post)).length;
     postsStatus.textContent = posts.length
-      ? `${posts.length} ${posts.length === 1 ? 'story' : 'stories'} in the database.`
+      ? `${posts.length} ${posts.length === 1 ? 'story' : 'stories'} in the database.${withheldCount ? ` ${withheldCount} hidden from public news pages pending safety review.` : ''}`
       : 'No stories have been posted yet.';
   } catch (error) {
     console.error('Posted stories could not be loaded.', error);
@@ -110,7 +136,22 @@ const loadPostedStories = async () => {
   }
 };
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+  if (user && user.uid !== authorizedAdminUid) {
+    loginPanel.hidden = false;
+    workspace.hidden = true;
+    postsList.replaceChildren();
+    postsStatus.textContent = 'Sign in to manage posted stories.';
+    showStatus('This Firebase account is not authorized to manage site news. Signing out…', true);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Unauthorized admin account could not be signed out.', error);
+      showStatus('This Firebase account is not authorized to manage site news. Sign out and use the authorized account.', true);
+    }
+    return;
+  }
+
   loginPanel.hidden = Boolean(user);
   workspace.hidden = !user;
 
@@ -130,6 +171,32 @@ onAuthStateChanged(auth, (user) => {
 refreshPostsButton.addEventListener('click', loadPostedStories);
 
 postsList.addEventListener('click', async (event) => {
+  const approveButton = event.target.closest('button[data-approve-post-id]');
+  if (approveButton) {
+    const postId = approveButton.dataset.approvePostId;
+    const title = approveButton.dataset.postTitle || 'this story';
+    const user = auth.currentUser;
+    if (!postId || !user || !window.confirm(`Approve "${title}" for public display?`)) return;
+
+    approveButton.disabled = true;
+    showStatus('Approving story…');
+    try {
+      await update(ref(database, `newsPosts/${postId}`), { reviewedBy: user.uid });
+      await loadPostedStories();
+      showStatus('Story approved and is now visible on the public news pages.');
+    } catch (error) {
+      console.error('News story could not be approved.', error);
+      showStatus(
+        error.code === 'PERMISSION_DENIED'
+          ? 'Firebase denied approval. Publish the updated database.rules.json rules, then try again.'
+          : 'Could not approve the story. Check your connection and try again.',
+        true
+      );
+      approveButton.disabled = false;
+    }
+    return;
+  }
+
   const deleteButton = event.target.closest('button[data-post-id]');
   if (!deleteButton) return;
 
@@ -204,28 +271,40 @@ newsForm.addEventListener('submit', async (event) => {
     if (sourceUrl && new URL(sourceUrl).protocol !== 'https:') {
       throw new Error('Source URL must use HTTPS.');
     }
+    const sourceAuthority = Number(newsForm.elements.sourceAuthority.value);
+    if (!Number.isFinite(sourceAuthority) || sourceAuthority < 0.5 || sourceAuthority > 2) {
+      throw new Error('Source authority score must be between 0.5 and 2.0.');
+    }
 
-    const postRef = push(ref(database, 'newsPosts'));
-    await set(postRef, {
+    const post = {
       title: newsForm.elements.title.value.trim(),
       authorName: 'Admin',
       authorType: 'Person',
       sourceUrl,
       category: newsForm.elements.category.value.trim(),
+      sourceAuthority,
       summary: newsForm.elements.summary.value.trim(),
       content: newsForm.elements.content.value.trim(),
       imageUrl,
       createdAt: serverTimestamp(),
       authorUid: user.uid,
       published: true
-    });
+    };
+    const postRef = push(ref(database, 'newsPosts'));
+    await set(postRef, post);
 
     newsForm.reset();
     await loadPostedStories();
-    showStatus('Story published. It is now available on the Latest Investigations page.');
+    showStatus(isPubliclySafePost(post)
+      ? 'Story published. It is now available on the Latest Investigations page.'
+      : 'Story saved, but it is hidden from public news pages pending safety review. Check it in the posted stories list.');
   } catch (error) {
     console.error('News story could not be published.', error);
-    if (error.message === 'Image URL must use HTTPS.' || error.message === 'Source URL must use HTTPS.') {
+    if (
+      error.message === 'Image URL must use HTTPS.' ||
+      error.message === 'Source URL must use HTTPS.' ||
+      error.message === 'Source authority score must be between 0.5 and 2.0.'
+    ) {
       showStatus(error.message, true);
     } else if (error.code === 'PERMISSION_DENIED') {
       showStatus(
