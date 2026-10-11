@@ -17,21 +17,32 @@ const escapeHtml = (value) => String(value)
 
 const escapeJsonLd = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
 
+const containsSensitiveExposure = (post) => {
+  const text = [post.title, post.summary, post.content]
+    .filter((value) => typeof value === 'string')
+    .join('\n');
+  const containsEmailAddress = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(text);
+  const containsDatasetDownloadLink =
+    /https?:\/\/[^\s<>"']*(?:download|dataset|data-dump|\.csv\b|\.sql\b|\.zip\b|\.xlsx?\b|\.7z\b)[^\s<>"']*/i.test(text);
+
+  return containsEmailAddress || containsDatasetDownloadLink;
+};
+
+const canAdminApprovePost = (post) => {
+  const imageUrl = typeof post.imageUrl === 'string' ? post.imageUrl : '';
+  return !unsafeImageMarkers.some((marker) => imageUrl.includes(marker)) &&
+    !containsSensitiveExposure(post);
+};
+
 const isPubliclySafePost = (post) => {
   const text = [post.title, post.summary, post.content]
     .filter((value) => typeof value === 'string')
     .join('\n');
-  const imageUrl = typeof post.imageUrl === 'string' ? post.imageUrl : '';
 
-  if (unsafeImageMarkers.some((marker) => imageUrl.includes(marker))) return false;
-  if (/\b(selling|for sale|buyers?|price\s*:|samples?\s+available|social engineering|spear phishing|sim swapping)\b/i.test(text)) {
-    return false;
-  }
-
-  return !(
-    /\b(passwords?|credentials?|email addresses?)\b/i.test(text) &&
-    /\b(download|downloadable|sample|dataset|data set|records?|https?:\/\/|links?)\b/i.test(text)
-  );
+  if (!canAdminApprovePost(post)) return false;
+  const requiresManualApproval = /\b(selling|for sale|buyers?|samples?\s+available|social engineering|spear phishing|sim swapping)\b|\bprice\s*:/i.test(text);
+  return !requiresManualApproval ||
+    (typeof post.reviewedBy === 'string' && post.reviewedBy.length > 0);
 };
 
 const publicUrl = (value) => {

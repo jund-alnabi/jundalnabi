@@ -1,6 +1,6 @@
 import { onValue, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { database } from './firebase-client.js';
-import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-authorship1';
+import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-admin-approve3';
 
 const feed = document.getElementById('liveNewsList');
 const status = document.getElementById('liveNewsStatus');
@@ -94,7 +94,40 @@ const buildPostCard = ([id, originalPost]) => {
   return article;
 };
 
+const buildReviewNotice = (post) => {
+  const article = document.createElement('article');
+  article.className = 'news-summary-card text-only';
+
+  const body = document.createElement('div');
+  body.className = 'news-summary-body';
+
+  const category = document.createElement('span');
+  category.className = 'tag';
+  category.textContent = 'Safety review';
+
+  const title = document.createElement('h2');
+  title.textContent = 'Latest story pending review';
+
+  const summary = document.createElement('p');
+  summary.textContent = 'A newly submitted story is being reviewed before it can appear publicly.';
+
+  const meta = document.createElement('div');
+  meta.className = 'meta-row';
+  const author = document.createElement('span');
+  author.className = 'author';
+  author.textContent = 'By Admin';
+  const date = document.createElement('time');
+  date.dateTime = new Date(post.createdAt).toISOString();
+  date.textContent = new Date(post.createdAt).toLocaleDateString();
+
+  meta.append(author, date);
+  body.append(category, title, summary, meta);
+  article.append(body);
+  return article;
+};
+
 const updateNewsFeed = (snapshot) => {
+  const publishedPosts = [];
   const posts = [];
   let withheldPosts = 0;
   snapshot.forEach((child) => {
@@ -104,6 +137,7 @@ const updateNewsFeed = (snapshot) => {
       post.published === true &&
       Number.isFinite(post.createdAt)
     ) {
+      publishedPosts.push([child.key, post]);
       if (isPubliclySafePost(post)) {
         posts.push([child.key, post]);
       } else {
@@ -111,8 +145,11 @@ const updateNewsFeed = (snapshot) => {
       }
     }
   });
+  publishedPosts.sort((first, second) => second[1].createdAt - first[1].createdAt);
   posts.sort((first, second) => second[1].createdAt - first[1].createdAt);
   updateNewsStats(posts);
+  const latestPostIsWithheld = publishedPosts.length > 0 &&
+    !isPubliclySafePost(publishedPosts[0][1]);
 
   const newsListSchema = document.getElementById('newsListSchema');
   if (newsListSchema) {
@@ -131,10 +168,12 @@ const updateNewsFeed = (snapshot) => {
   }
 
   const visiblePosts = Number.isInteger(postLimit) && postLimit > 0
-    ? posts.slice(0, postLimit)
+    ? posts.slice(0, Math.max(0, postLimit - Number(latestPostIsWithheld)))
     : posts;
 
-  feed.replaceChildren(...visiblePosts.map(([id, post]) => buildPostCard([id, post])));
+  const cards = visiblePosts.map(([id, post]) => buildPostCard([id, post]));
+  if (latestPostIsWithheld) cards.unshift(buildReviewNotice(publishedPosts[0][1]));
+  feed.replaceChildren(...cards);
 
   if (ticker) {
     const group = document.createElement('div');
@@ -165,9 +204,16 @@ const updateNewsFeed = (snapshot) => {
   const visibleStatus = visiblePosts.length
     ? `Showing the ${visiblePosts.length} latest ${visiblePosts.length === 1 ? 'story' : 'stories'}`
     : 'No published stories are available.';
-  status.textContent = withheldPosts
-    ? `${visibleStatus} ${withheldPosts} post${withheldPosts === 1 ? ' is' : 's are'} hidden until its text and image are made safe in Admin.`
-    : visibleStatus;
+  const withheldStatus = latestPostIsWithheld
+    ? 'The latest submission is pending Admin safety review.'
+    : '';
+  const olderWithheldCount = withheldPosts - Number(latestPostIsWithheld);
+  const olderWithheldStatus = olderWithheldCount > 0
+    ? `${olderWithheldCount} older ${olderWithheldCount === 1 ? 'post is' : 'posts are'} also hidden pending review.`
+    : '';
+  status.textContent = [visibleStatus, withheldStatus, olderWithheldStatus]
+    .filter(Boolean)
+    .join(' ');
 };
 
 const showNewsFeedError = (error) => {

@@ -30,6 +30,9 @@
         "published": {
           ".validate": "newData.val() === true"
         },
+        "reviewedBy": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
         "$other": {
           ".validate": false
         }

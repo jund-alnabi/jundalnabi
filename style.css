@@ -1054,8 +1054,14 @@ h1 {
 
 .admin-post-actions {
   display: flex;
+  align-items: center;
   flex-shrink: 0;
   gap: 0.55rem;
+}
+
+.admin-post-actions .admin-post-meta {
+  max-width: 15rem;
+  white-space: normal;
 }
 
 .admin-post-actions .btn {

@@ -1,6 +1,7 @@
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import { get, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
-import { database } from './firebase-client.js';
-import { isPubliclySafePost } from './news-content.js?v=20261011-authorship1';
+import { auth, database } from './firebase-client.js';
+import { isPubliclySafePost } from './news-content.js?v=20261011-admin-approve3';
 
 const siteUrl = 'http://jundalnabi.duckdns.org/';
 const content = document.getElementById('publishedStory');
@@ -8,6 +9,15 @@ const status = document.getElementById('storyStatus');
 const image = document.getElementById('storyImage');
 const source = document.getElementById('storySource');
 const publisherId = `${siteUrl}#organization`;
+const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
+
+const getCurrentUser = () => new Promise((resolve, reject) => {
+  let unsubscribe = () => {};
+  unsubscribe = onAuthStateChanged(auth, (user) => {
+    unsubscribe();
+    resolve(user);
+  }, reject);
+});
 
 const setMetaContent = (selector, contentValue) => {
   const meta = document.querySelector(selector);
@@ -104,45 +114,53 @@ if (!postId) {
     : 'This story link is missing an ID.');
 } else {
   try {
-    const snapshot = await get(ref(database, `newsPosts/${postId}`));
-    const storedPost = snapshot.val();
-
-    if (
-      !storedPost ||
-      storedPost.published !== true ||
-      !Number.isFinite(storedPost.createdAt) ||
-      !isPubliclySafePost(storedPost)
-    ) {
-      showUnavailable('This story was not found or is no longer available.');
+    const user = isPreview ? await getCurrentUser() : null;
+    if (isPreview && !user) {
+      showUnavailable('Sign in to the admin account that published this story to preview it.');
     } else {
-      const post = storedPost;
-      document.getElementById('storyCategory').textContent = post.category;
-      document.getElementById('storyTitle').textContent = post.title;
-      document.getElementById('storyDate').dateTime = new Date(post.createdAt).toISOString();
-      document.getElementById('storyDate').textContent = new Date(post.createdAt).toLocaleDateString();
-      document.getElementById('storySummary').textContent = post.summary;
-      document.getElementById('storyBody').textContent = post.content;
+      const snapshot = await get(ref(database, `newsPosts/${postId}`));
+      const storedPost = snapshot.val();
 
-      const imageUrl = safeImageUrl(post.imageUrl);
-      const sourceUrl = safeImageUrl(post.sourceUrl);
-      if (sourceUrl) {
-        const sourceLink = document.createElement('a');
-        sourceLink.href = sourceUrl;
-        sourceLink.rel = 'noopener noreferrer';
-        sourceLink.target = '_blank';
-        sourceLink.textContent = 'View original source';
-        source.replaceChildren(document.createTextNode('Source: '), sourceLink);
-        source.hidden = false;
-      }
-      setStorySeo(post, postId, imageUrl);
-      if (imageUrl) {
-        image.src = imageUrl;
-        image.alt = post.title;
-        image.hidden = false;
-      }
+      if (
+        !storedPost ||
+        storedPost.published !== true ||
+        !Number.isFinite(storedPost.createdAt) ||
+        (!isPubliclySafePost(storedPost) && (!isPreview || storedPost.authorUid !== user.uid))
+      ) {
+        showUnavailable('This story was not found or is no longer available.');
+      } else {
+        const post = storedPost;
+        const isPublic = isPubliclySafePost(post);
+        document.getElementById('storyCategory').textContent = post.category;
+        document.getElementById('storyTitle').textContent = post.title;
+        document.getElementById('storyDate').dateTime = new Date(post.createdAt).toISOString();
+        document.getElementById('storyDate').textContent = new Date(post.createdAt).toLocaleDateString();
+        document.getElementById('storySummary').textContent = post.summary;
+        document.getElementById('storyBody').textContent = post.content;
 
-      content.hidden = false;
-      status.textContent = '';
+        const imageUrl = safeImageUrl(post.imageUrl);
+        const sourceUrl = safeImageUrl(post.sourceUrl);
+        if (sourceUrl) {
+          const sourceLink = document.createElement('a');
+          sourceLink.href = sourceUrl;
+          sourceLink.rel = 'noopener noreferrer';
+          sourceLink.target = '_blank';
+          sourceLink.textContent = 'View original source';
+          source.replaceChildren(document.createTextNode('Source: '), sourceLink);
+          source.hidden = false;
+        }
+        if (isPublic) setStorySeo(post, postId, imageUrl);
+        if (imageUrl) {
+          image.src = imageUrl;
+          image.alt = post.title;
+          image.hidden = false;
+        }
+
+        content.hidden = false;
+        status.textContent = isPreview && !isPublic
+          ? 'Admin preview only — this story is hidden from public news pages pending safety review.'
+          : '';
+      }
     }
   } catch (error) {
     console.error('News story could not be loaded.', error);
