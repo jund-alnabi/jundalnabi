@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: http://jundalnabi.duckdns.org/sitemap.xml
+Sitemap: http://jundalnabi.duckdns.org/news-sitemap.xml

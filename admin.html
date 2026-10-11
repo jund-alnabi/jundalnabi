@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>News Admin | Jundal Nabi</title>
+    <link rel="stylesheet" href="style.css?v=20261011-authorship1" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="container nav" aria-label="Main navigation">
+        <a class="brand" href="index.html">Jundal Nabi</a>
+        <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="siteNavLinks">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="nav-links" id="siteNavLinks">
+          <a href="index.html">Back to site</a>
+          <a href="news.html">View news</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="news-shell">
+      <div class="container admin-shell">
+        <header class="news-header">
+          <p class="eyebrow">Private area</p>
+          <h1>News Admin</h1>
+          <p>Sign in with your authorized Firebase account to publish a news story.</p>
+          <p class="admin-setup-note">
+            This site uses the jundalnabi-9b088 Firebase project. Sign in with its authorized account
+            to publish and manage stories. If Firebase denies access, verify the account UID and that
+            <code>database.rules.json</code> matches the rules currently published under Realtime Database → Rules.
+          </p>
+        </header>
+
+        <section class="admin-panel" aria-labelledby="adminPanelTitle">
+          <div id="adminLogin">
+            <h2 id="adminPanelTitle">Admin sign in</h2>
+            <form id="loginForm" class="admin-form">
+              <label for="adminEmail">Email</label>
+              <input id="adminEmail" name="email" type="email" autocomplete="username" required />
+
+              <label for="adminPassword">Password</label>
+              <input id="adminPassword" name="password" type="password" autocomplete="current-password" required />
+
+              <button class="btn btn-primary" type="submit">Sign in</button>
+            </form>
+          </div>
+
+          <div id="adminWorkspace" hidden>
+            <div class="admin-account">
+              <p>Signed in as <strong id="adminEmailLabel"></strong></p>
+              <p class="admin-uid">Firebase UID: <code id="adminUid"></code></p>
+              <button class="btn btn-secondary" id="signOutButton" type="button">Sign out</button>
+            </div>
+
+            <h2>Publish a news story</h2>
+            <form id="newsForm" class="admin-form">
+              <label for="newsTitle">Headline</label>
+              <input id="newsTitle" name="title" type="text" maxlength="140" required />
+
+              <label for="newsCategory">Category</label>
+              <input
+                id="newsCategory"
+                name="category"
+                type="text"
+                maxlength="60"
+                list="categoryOptions"
+                autocomplete="off"
+                aria-describedby="categoryHelp"
+                required
+              />
+              <datalist id="categoryOptions">
+                <option value="Cybersecurity"></option>
+                <option value="Data Breach"></option>
+                <option value="Data Leak"></option>
+                <option value="Investigation"></option>
+                <option value="Malware"></option>
+                <option value="Phishing"></option>
+                <option value="Ransomware"></option>
+                <option value="Security Advisory"></option>
+                <option value="Threat Intelligence"></option>
+                <option value="Vulnerability"></option>
+                <option value="Website Defacement"></option>
+              </datalist>
+              <small id="categoryHelp" class="admin-field-help">
+                Start typing to see common categories and categories used in existing stories. You can also enter a new category.
+              </small>
+
+              <label for="newsSummary">Summary</label>
+              <textarea id="newsSummary" name="summary" rows="3" maxlength="400" required></textarea>
+              <small class="admin-field-help">
+                Summarize the verified information. Attribute claims to their source, distinguish allegations from confirmed facts, and do not include private personal information or credentials.
+              </small>
+
+              <label for="newsContent">Story</label>
+              <textarea id="newsContent" name="content" rows="10" maxlength="20000" required></textarea>
+              <small class="admin-field-help">
+                Identify the source and link to it where available. State what is known, what is alleged, and what remains unverified. Correct errors promptly.
+                <a href="editorial-standards.html">Read the editorial standards.</a>
+              </small>
+
+              <label for="newsImageUrl">Image URL <span>(optional, HTTPS)</span></label>
+              <input id="newsImageUrl" name="imageUrl" type="url" inputmode="url" />
+
+              <label for="newsSourceUrl">Original source URL <span>(optional, HTTPS)</span></label>
+              <input id="newsSourceUrl" name="sourceUrl" type="url" inputmode="url" />
+
+              <button class="btn btn-primary" type="submit">Publish story</button>
+            </form>
+
+            <section class="admin-posts-section" aria-labelledby="postedStoriesTitle">
+              <div class="admin-posts-heading">
+                <div>
+                  <p class="eyebrow">Manage posts</p>
+                  <h2 id="postedStoriesTitle">Published stories</h2>
+                </div>
+                <button class="btn btn-secondary" id="refreshPostsButton" type="button">Refresh</button>
+              </div>
+              <p id="postsStatus" class="admin-posts-status" role="status" aria-live="polite">Loading posted stories…</p>
+              <div id="adminPostsList" class="admin-posts-list"></div>
+            </section>
+          </div>
+
+          <p id="adminStatus" class="admin-status" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© <span data-year></span> Jundal Nabi. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="admin.js?v=20261011-static-news1"></script>
+  </body>
+</html>

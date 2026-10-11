@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">Cloud telephony report illustration</title>
+  <desc id="desc">A cloud-connected phone system with protected data signals</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#112239"/>
+      <stop offset="1" stop-color="#183e58"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" x2="1">
+      <stop stop-color="#45d5e8"/>
+      <stop offset="1" stop-color="#8794ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <circle cx="250" cy="95" r="210" fill="#8294ff" opacity=".08"/>
+  <circle cx="1040" cy="550" r="230" fill="#2dd1e4" opacity=".08"/>
+  <path d="M385 300a90 90 0 0 1 180 0v45H385zM345 310h-20a42 42 0 0 0-42 42v69a42 42 0 0 0 42 42h55V310zm260 0h20a42 42 0 0 1 42 42v69a42 42 0 0 1-42 42h-55V310z" fill="none" stroke="url(#line)" stroke-width="24" stroke-linejoin="round"/>
+  <path d="M415 463c30 51 94 75 152 54" fill="none" stroke="#d5e4ee" stroke-width="18" stroke-linecap="round"/>
+  <path d="m562 493 10 27-29 4" fill="none" stroke="#d5e4ee" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M735 198c0-48 39-87 87-87 34 0 64 20 78 49 11-8 25-13 40-13 38 0 69 31 69 69s-31 69-69 69H817c-45 0-82-36-82-81z" fill="#eaf2f7"/>
+  <path d="M829 204h156M858 241h98" stroke="#9bacbf" stroke-width="14" stroke-linecap="round"/>
+  <path d="M676 355h362" stroke="#4b7893" stroke-width="8" stroke-dasharray="14 22"/>
+  <circle cx="698" cy="355" r="18" fill="#43d2e5"/>
+  <circle cx="1016" cy="355" r="18" fill="#8794ff"/>
+</svg>

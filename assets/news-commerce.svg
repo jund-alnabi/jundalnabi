@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">E-commerce security report illustration</title>
+  <desc id="desc">A shopping bag and protected order records</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#102238"/>
+      <stop offset="1" stop-color="#17455a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop stop-color="#41d7eb"/>
+      <stop offset="1" stop-color="#7a8cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="600" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="210" fill="#33c8dc" opacity=".09"/>
+  <circle cx="155" cy="550" r="190" fill="#7a8cff" opacity=".08"/>
+  <rect x="185" y="110" width="405" height="385" rx="34" fill="#f0f5fa"/>
+  <path d="M295 205v-34a92 92 0 0 1 184 0v34" fill="none" stroke="#9aabc0" stroke-width="24" stroke-linecap="round"/>
+  <path d="M238 220h300l-28 219H266z" fill="url(#accent)"/>
+  <path d="M336 316h106M336 365h68" stroke="#102238" stroke-width="20" stroke-linecap="round" opacity=".8"/>
+  <rect x="680" y="165" width="340" height="265" rx="28" fill="#152b41" stroke="#47718b" stroke-width="8"/>
+  <path d="M730 225h238M730 283h184M730 341h134" stroke="#b7c8dc" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="934" cy="394" r="83" fill="#24c9df"/>
+  <path d="m897 395 27 28 51-59" fill="none" stroke="#102238" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
