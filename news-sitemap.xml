@@ -4,13 +4,24 @@
   xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
 >
   <url>
+    <loc>http://jundalnabi.duckdns.org/generated-news/-P3ft-8qgyGaeh_EB9gq.html</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Jundal Nabi</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-10-11T16:55:25.836Z</news:publication_date>
+      <news:title>Data Breach Alert: Threat Actor &quot;JundAlNabi&quot; Claims Leak of 22.5k E-Commerce Order Records</news:title>
+    </news:news>
+  </url>
+  <url>
     <loc>http://jundalnabi.duckdns.org/generated-news/-P3_Xycsx54cY7jfojQz.html</loc>
     <news:news>
       <news:publication>
         <news:name>Jundal Nabi</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2026-10-10T11:21:29Z</news:publication_date>
+      <news:publication_date>2026-10-10T11:21:29.158Z</news:publication_date>
       <news:title>Ethnic Food Products Archive Exposure</news:title>
     </news:news>
   </url>
@@ -21,7 +32,7 @@
         <news:name>Jundal Nabi</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2026-10-10T11:17:17Z</news:publication_date>
+      <news:publication_date>2026-10-10T11:17:17.643Z</news:publication_date>
       <news:title>Teleforce Cloud Telephony Exposure</news:title>
     </news:news>
   </url>
@@ -32,7 +43,7 @@
         <news:name>Jundal Nabi</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>2026-10-10T11:02:46Z</news:publication_date>
+      <news:publication_date>2026-10-10T11:02:46.112Z</news:publication_date>
       <news:title>Israeli Website Public Defaced By JundAlNabi PK</news:title>
     </news:news>
   </url>
