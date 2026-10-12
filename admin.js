@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
 import { get, push, ref, remove, serverTimestamp, set, update } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { auth, database } from './firebase-client.js';
-import { canAdminApprovePost, isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-admin-approve3';
+import { canAdminApprovePost, isPubliclySafePost, storyUrl } from './news-content.js?v=20261012-static-stories1';
 
 const loginForm = document.getElementById('loginForm');
 const newsForm = document.getElementById('newsForm');

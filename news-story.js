@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { isPubliclySafePost } from './news-content.js?v=20261011-admin-approve3';
+import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261012-static-stories1';
 import { recordStoryRead } from './news-recommendations.js?v=20261012-recommendations1';
 
 const siteUrl = 'https://jundalnabi.duckdns.org/';
@@ -82,16 +82,16 @@ const setMetaContent = (selector, contentValue) => {
 
 const setStorySeo = (post, postId, imageUrl) => {
   const title = `${post.title} | Jundal Nabi`;
-  const storyUrl = `${siteUrl}news-story.html?id=${encodeURIComponent(postId)}`;
+  const canonicalStoryUrl = `${siteUrl}${storyUrl(postId, false, post)}`;
   const description = String(post.summary || '').replace(/\s+/g, ' ').trim().slice(0, 300);
   const shareImage = imageUrl || `${siteUrl}assets/og-image.svg`;
 
   document.title = title;
-  document.querySelector('link[rel="canonical"]').href = storyUrl;
+  document.querySelector('link[rel="canonical"]').href = canonicalStoryUrl;
   setMetaContent('meta[name="description"]', description);
   setMetaContent('meta[property="og:title"]', title);
   setMetaContent('meta[property="og:description"]', description);
-  setMetaContent('meta[property="og:url"]', storyUrl);
+  setMetaContent('meta[property="og:url"]', canonicalStoryUrl);
   setMetaContent('meta[property="og:image"]', shareImage);
   setMetaContent('meta[name="twitter:title"]', title);
   setMetaContent('meta[name="twitter:description"]', description);
@@ -100,7 +100,7 @@ const setStorySeo = (post, postId, imageUrl) => {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
-    '@id': `${storyUrl}#article`,
+    '@id': `${canonicalStoryUrl}#article`,
     headline: post.title,
     description,
     articleBody: post.content,
@@ -111,7 +111,7 @@ const setStorySeo = (post, postId, imageUrl) => {
     dateModified: new Date(
       Number.isFinite(post.updatedAt) ? post.updatedAt : post.createdAt,
     ).toISOString(),
-    mainEntityOfPage: { '@type': 'WebPage', '@id': storyUrl },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalStoryUrl },
     author: { '@type': 'Organization', name: 'Admin' },
     publisher: {
       '@type': 'Organization',

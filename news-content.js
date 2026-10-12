@@ -34,5 +34,18 @@ export const isPubliclySafePost = (post) =>
   passesAutomaticSafetyReview(post) ||
   (typeof post.reviewedBy === 'string' && post.reviewedBy.length > 0 && canAdminApprovePost(post));
 
-export const storyUrl = (id, preview = false) =>
-  `news-story.html?id=${encodeURIComponent(id)}${preview ? '&preview=1' : ''}`;
+export const storySlug = (id, post) => {
+  const titleSlug = (typeof post.title === 'string' ? post.title : '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'story';
+  const idSuffix = id.replace(/[^a-z0-9]/gi, '').slice(-6).toLocaleLowerCase() || 'latest';
+  return `${titleSlug}-${idSuffix}`;
+};
+
+export const storyUrl = (id, preview = false, post) =>
+  preview || !post
+    ? `news-story.html?id=${encodeURIComponent(id)}${preview ? '&preview=1' : ''}`
+    : `news/${storySlug(id, post)}.html`;

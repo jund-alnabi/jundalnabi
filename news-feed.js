@@ -1,6 +1,7 @@
 import { onValue, ref } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js';
 import { database } from './firebase-client.js';
-import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261011-admin-approve3';
+import { firebaseConfig } from './firebase-config.js';
+import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261012-static-stories1';
 import { clearStoryReads, rankStories } from './news-recommendations.js?v=20261012-recommendations1';
 
 const feed = document.getElementById('liveNewsList');
@@ -12,7 +13,10 @@ const newsTopicCount = document.getElementById('newsTopicCount');
 const latestNewsDate = document.getElementById('latestNewsDate');
 const recommendationToggle = document.getElementById('recommendationToggle');
 const recommendationReset = document.getElementById('recommendationReset');
-let latestSnapshot;
+let latestPosts;
+let hasLoadedNews = false;
+let initialLoadFallback;
+let fallbackStarted = false;
 let recommendationsEnabled = false;
 const updateNewsStats = (posts) => {
   if (!publishedStoryCount || !newsTopicCount || !latestNewsDate) return;
@@ -90,7 +94,7 @@ const buildPostCard = ([id, originalPost]) => {
   date.textContent = new Date(post.createdAt).toLocaleDateString();
 
   const link = document.createElement('a');
-  link.href = storyUrl(id);
+  link.href = storyUrl(id, false, post);
   link.textContent = 'Read story';
 
   meta.append(author, date, link);
@@ -131,21 +135,20 @@ const buildReviewNotice = (post) => {
   return article;
 };
 
-const updateNewsFeed = (snapshot) => {
-  latestSnapshot = snapshot;
+const updateNewsFeedData = (postsById) => {
+  latestPosts = postsById;
   const publishedPosts = [];
   const posts = [];
   let withheldPosts = 0;
-  snapshot.forEach((child) => {
-    const post = child.val();
+  Object.entries(postsById || {}).forEach(([id, post]) => {
     if (
       post &&
       post.published === true &&
       Number.isFinite(post.createdAt)
     ) {
-      publishedPosts.push([child.key, post]);
+      publishedPosts.push([id, post]);
       if (isPubliclySafePost(post)) {
-        posts.push([child.key, post]);
+        posts.push([id, post]);
       } else {
         withheldPosts += 1;
       }
@@ -166,7 +169,7 @@ const updateNewsFeed = (snapshot) => {
       itemListElement: posts.map(([id, post], index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: `${siteUrl}${storyUrl(id)}`,
+        url: `${siteUrl}${storyUrl(id, false, post)}`,
         name: post.title
       }))
     };
@@ -198,7 +201,7 @@ const updateNewsFeed = (snapshot) => {
     visiblePosts.forEach(([id, post]) => {
       const headline = document.createElement('span');
       const link = document.createElement('a');
-      link.href = storyUrl(id);
+      link.href = storyUrl(id, false, post);
       link.textContent = typeof post.title === 'string' ? post.title : '';
       headline.append(link);
       group.append(headline);
@@ -240,10 +243,60 @@ const updateNewsFeed = (snapshot) => {
   status.classList.toggle('is-error', recommendationError);
 };
 
+const updateNewsFeed = (snapshot) => {
+  hasLoadedNews = true;
+  window.clearTimeout(initialLoadFallback);
+  updateNewsFeedData(snapshot.val());
+};
+
 const showNewsFeedError = (error) => {
+  window.clearTimeout(initialLoadFallback);
   console.error('Latest news could not be loaded from Firebase.', error);
   status.textContent = 'News could not be loaded from Firebase. Please try again later.';
   status.classList.add('is-error');
+};
+
+const loadNewsFallback = async () => {
+  if (hasLoadedNews || fallbackStarted) return;
+  fallbackStarted = true;
+  window.clearTimeout(initialLoadFallback);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const databaseUrl = firebaseConfig.databaseURL.replace(/\/+$/, '');
+    const response = await fetch(`${databaseUrl}/newsPosts.json`, {
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Firebase returned HTTP ${response.status} for public news.`);
+    }
+
+    const posts = await response.json();
+    if (posts !== null && (typeof posts !== 'object' || Array.isArray(posts))) {
+      throw new Error('Firebase returned an invalid public news response.');
+    }
+
+    if (!hasLoadedNews) {
+      hasLoadedNews = true;
+      updateNewsFeedData(posts);
+    }
+  } catch (error) {
+    console.error('The public news REST fallback could not be loaded.', error);
+    if (!hasLoadedNews) showNewsFeedError(error);
+  } finally {
+    window.clearTimeout(timeout);
+  }
+};
+
+const handleNewsFeedError = (error) => {
+  if (hasLoadedNews) {
+    showNewsFeedError(error);
+    return;
+  }
+
+  console.error('Realtime news could not be loaded from Firebase.', error);
+  void loadNewsFallback();
 };
 
 try {
@@ -253,12 +306,12 @@ try {
       ? 'Show latest first'
       : 'Get recommendations';
     recommendationToggle.setAttribute('aria-pressed', String(recommendationsEnabled));
-    if (latestSnapshot) updateNewsFeed(latestSnapshot);
+    if (hasLoadedNews) updateNewsFeedData(latestPosts);
   });
   recommendationReset?.addEventListener('click', () => {
     try {
       clearStoryReads();
-      if (latestSnapshot) updateNewsFeed(latestSnapshot);
+      if (hasLoadedNews) updateNewsFeedData(latestPosts);
       status.textContent = 'Local recommendation history cleared.';
     } catch (error) {
       console.error('Local news reading history could not be cleared.', error);
@@ -266,7 +319,8 @@ try {
       status.classList.add('is-error');
     }
   });
-  onValue(ref(database, 'newsPosts'), updateNewsFeed, showNewsFeedError, { onlyOnce: false });
+  initialLoadFallback = window.setTimeout(loadNewsFallback, 5000);
+  onValue(ref(database, 'newsPosts'), updateNewsFeed, handleNewsFeedError, { onlyOnce: false });
 } catch (error) {
-  showNewsFeedError(error);
+  handleNewsFeedError(error);
 }
