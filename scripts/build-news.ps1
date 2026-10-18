@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$siteUrl = 'https://jundalnabi.duckdns.org/'
+$siteUrl = 'https://jundalnabi.jo3.org/'
 $databaseUrl = 'https://jundalnabi-9b088-default-rtdb.firebaseio.com'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $newsDirectory = Join-Path $root 'news'
@@ -316,7 +316,7 @@ $storyUrls = ($posts | ForEach-Object {
 $storyUrls = "`n$storyUrls`n  "
 $sitemapPath = Join-Path $root 'sitemap.xml'
 $sitemap = [IO.File]::ReadAllText($sitemapPath)
-$sitemap = $sitemap -replace 'http://jundalnabi\.duckdns\.org/', 'https://jundalnabi.duckdns.org/'
+$sitemap = $sitemap -replace 'http://jundalnabi\.duckdns\.org/', 'https://jundalnabi.jo3.org/'
 $sitemap = Set-GeneratedRegion $sitemap '<!-- GENERATED_STORY_URLS_START -->' '<!-- GENERATED_STORY_URLS_END -->' $storyUrls
 [IO.File]::WriteAllText($sitemapPath, $sitemap, [Text.UTF8Encoding]::new($false))
 

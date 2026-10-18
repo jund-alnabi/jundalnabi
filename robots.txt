@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jundalnabi.duckdns.org/sitemap.xml
+Sitemap: https://jundalnabi.jo3.org/sitemap.xml

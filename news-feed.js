@@ -162,7 +162,7 @@ const updateNewsFeedData = (postsById) => {
 
   const newsListSchema = document.getElementById('newsListSchema');
   if (newsListSchema) {
-    const siteUrl = 'https://jundalnabi.duckdns.org/';
+    const siteUrl = 'https://jundalnabi.jo3.org/';
     const schema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',

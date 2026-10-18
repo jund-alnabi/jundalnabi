@@ -2,7 +2,7 @@ import { firebaseConfig } from './firebase-config.js';
 import { isPubliclySafePost, storyUrl } from './news-content.js?v=20261012-static-stories1';
 import { recordStoryRead } from './news-recommendations.js?v=20261012-recommendations1';
 
-const siteUrl = 'https://jundalnabi.duckdns.org/';
+const siteUrl = 'https://jundalnabi.jo3.org/';
 const content = document.getElementById('publishedStory');
 const status = document.getElementById('storyStatus');
 const image = document.getElementById('storyImage');
