@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://jundalnabi.jo3.org/sitemap.xml
